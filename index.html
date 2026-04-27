@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fi">
+<html lang="fi" style="background-color:#0d0d0d;">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -9,6 +9,10 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* Force black background unconditionally */
+  html { background-color: #0d0d0d !important; }
+
+  /* CSS variables — EdgeHTML 15 (Creators Update) supports these */
   :root {
     --bg: #0d0d0d;
     --card-face: #f0c060;
@@ -19,22 +23,29 @@
   }
 
   body {
+    background-color: #0d0d0d !important;
+    background: #0d0d0d;
     background: var(--bg);
     min-height: 100vh;
+    display: -ms-flexbox;
     display: flex;
+    -ms-flex-direction: column;
     flex-direction: column;
+    -ms-flex-align: center;
     align-items: center;
+    -ms-flex-pack: center;
     justify-content: center;
     font-family: 'Oswald', sans-serif;
     overflow: hidden;
+    -ms-user-select: none;
     user-select: none;
   }
 
-  /* Scanlines */
+  /* Scanlines — NO inset, explicit positions */
   body::after {
     content: '';
     position: fixed;
-    inset: 0;
+    top: 0; right: 0; bottom: 0; left: 0;
     background: repeating-linear-gradient(
       to bottom,
       transparent 0px, transparent 3px,
@@ -44,20 +55,20 @@
     z-index: 997;
   }
 
-  /* Vignette */
+  /* Vignette — NO inset */
   body::before {
     content: '';
     position: fixed;
-    inset: 0;
+    top: 0; right: 0; bottom: 0; left: 0;
     background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.7) 100%);
     pointer-events: none;
     z-index: 996;
   }
 
-  /* ── Snow canvas ── */
+  /* Snow — NO inset */
   #snow-container {
     position: fixed;
-    inset: 0;
+    top: 0; right: 0; bottom: 0; left: 0;
     pointer-events: none;
     z-index: 1;
     overflow: hidden;
@@ -67,47 +78,67 @@
     position: absolute;
     top: -20px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.82);
-    animation: fall linear infinite;
+    background: rgba(200,220,255,0.88);
+    /* animation-name is set per-element in JS; duration/delay too */
   }
 
-  @keyframes fall {
-    0%   { transform: translateY(0) translateX(0); opacity: 0; }
-    5%   { opacity: 1; }
-    95%  { opacity: 0.7; }
-    100% { transform: translateY(105vh) translateX(var(--drift)); opacity: 0; }
-  }
-
-  /* ── Clock ── */
+  /* ── Clock — NO gap, use margins instead ── */
   .clock {
+    display: -ms-flexbox;
     display: flex;
+    -ms-flex-align: flex-end;
     align-items: flex-end;
-    gap: 10px;
     position: relative;
     z-index: 10;
   }
 
-  .digit-group { display: flex; gap: 5px; }
+  /* Spacing between clock groups via margin */
+  .clock > .digit-group { margin-right: 10px; }
+  .clock > .colon       { margin-right: 10px; }
+  .clock > *:last-child { margin-right: 0; }
+
+  /* digit-group — NO gap */
+  .digit-group {
+    display: -ms-flexbox;
+    display: flex;
+  }
+  .digit-group .flip-card         { margin-right: 5px; }
+  .digit-group .flip-card:last-child { margin-right: 0; }
   .digit-group.seconds { margin-bottom: 4px; }
 
+  /* colon — NO gap, margin between dots */
   .colon {
+    display: -ms-flexbox;
     display: flex;
+    -ms-flex-direction: column;
     flex-direction: column;
+    -ms-flex-pack: center;
     justify-content: center;
-    gap: 12px;
     padding-bottom: 8px;
   }
-  .colon.sec-colon { gap: 9px; padding-bottom: 6px; }
+  .colon .colon-dot         { margin-bottom: 12px; }
+  .colon .colon-dot:last-child { margin-bottom: 0; }
+
+  .colon.sec-colon { padding-bottom: 6px; }
+  .colon.sec-colon .colon-dot         { margin-bottom: 9px; }
+  .colon.sec-colon .colon-dot:last-child { margin-bottom: 0; }
 
   .colon-dot {
     width: 9px; height: 9px;
     border-radius: 50%;
+    background: #e8a820;
     background: var(--accent);
+    box-shadow: 0 0 8px #e8a820, 0 0 18px rgba(232,168,32,0.35);
     box-shadow: 0 0 8px var(--accent), 0 0 18px rgba(232,168,32,0.35);
+    -webkit-animation: blink 1s step-end infinite;
     animation: blink 1s step-end infinite;
   }
   .sec-colon .colon-dot { width: 6px; height: 6px; }
 
+  @-webkit-keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.12; }
+  }
   @keyframes blink {
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.12; }
@@ -117,7 +148,9 @@
   .flip-card {
     position: relative;
     width: 82px; height: 110px;
+    -webkit-perspective: 380px;
     perspective: 380px;
+    -ms-flex-negative: 0;
     flex-shrink: 0;
   }
   .flip-card.sm { width: 60px; height: 80px; }
@@ -130,7 +163,8 @@
   .static-top {
     top: 0;
     border-radius: 6px 6px 0 0;
-    border-bottom: 2px solid var(--divider);
+    border-bottom: 2px solid #0d0d0d;
+    border-bottom-color: var(--divider);
     background: linear-gradient(160deg, #221c10 0%, #1a1510 100%);
   }
   .static-bottom {
@@ -144,8 +178,14 @@
   .static-bottom .digit-face {
     position: absolute;
     width: 100%; height: 200%;
-    display: flex; align-items: center; justify-content: center;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    -ms-flex-pack: center;
+    justify-content: center;
     font-size: 80px; font-weight: 700;
+    color: #f0c060;
     color: var(--card-face);
     line-height: 1;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 0 28px rgba(240,192,96,0.13);
@@ -154,17 +194,21 @@
   .flip-card.sm .static-top .digit-face,
   .flip-card.sm .static-bottom .digit-face {
     font-size: 58px;
+    color: #c89438;
     color: var(--card-face-sec);
     text-shadow: 0 2px 6px rgba(0,0,0,0.6);
     letter-spacing: -1px;
   }
   .static-bottom .digit-face { top: -100%; }
 
+  /* Flaps — with webkit prefixes for 3D transforms */
   .flap-top, .flap-bottom {
     position: absolute;
     left: 0; width: 100%; height: 50%;
     overflow: hidden;
+    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    -webkit-transform-style: preserve-3d;
     transform-style: preserve-3d;
   }
   .flap-top {
@@ -172,7 +216,9 @@
     border-radius: 6px 6px 0 0;
     background: linear-gradient(160deg, #282010 0%, #1e1a0e 100%);
     z-index: 10;
+    -webkit-transform: rotateX(0deg);
     transform: rotateX(0deg);
+    -webkit-transform-origin: bottom center;
     transform-origin: bottom center;
   }
   .flap-bottom {
@@ -180,38 +226,56 @@
     border-radius: 0 0 6px 6px;
     background: linear-gradient(160deg, #1e1a0e 0%, #151108 100%);
     z-index: 9;
+    -webkit-transform: rotateX(90deg);
     transform: rotateX(90deg);
+    -webkit-transform-origin: top center;
     transform-origin: top center;
   }
   .flap-top .digit-face, .flap-bottom .digit-face {
     position: absolute;
     width: 100%; height: 200%;
-    display: flex; align-items: center; justify-content: center;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+    -ms-flex-pack: center;
+    justify-content: center;
     font-size: 80px; font-weight: 700;
+    color: #f0c060;
     color: var(--card-face);
     line-height: 1;
     text-shadow: 0 2px 8px rgba(0,0,0,0.6), 0 0 28px rgba(240,192,96,0.12);
     letter-spacing: -2px;
+    -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
   .flip-card.sm .flap-top .digit-face,
   .flip-card.sm .flap-bottom .digit-face {
     font-size: 58px;
+    color: #c89438;
     color: var(--card-face-sec);
     letter-spacing: -1px;
   }
   .flap-bottom .digit-face { top: -100%; }
 
-  .flap-top.flip    { animation: flipTop    0.22s ease-in  forwards; }
-  .flap-bottom.flip { animation: flipBottom 0.22s ease-out 0.18s forwards; }
+  .flap-top.flip    { -webkit-animation: flipTop    0.22s ease-in  forwards; animation: flipTop    0.22s ease-in  forwards; }
+  .flap-bottom.flip { -webkit-animation: flipBottom 0.22s ease-out 0.18s forwards; animation: flipBottom 0.22s ease-out 0.18s forwards; }
 
+  @-webkit-keyframes flipTop {
+    0%   { -webkit-transform: rotateX(0deg); }
+    100% { -webkit-transform: rotateX(-90deg); box-shadow: 0 8px 20px rgba(0,0,0,0.7); }
+  }
   @keyframes flipTop {
-    0%   { transform: rotateX(0deg);   }
+    0%   { transform: rotateX(0deg); }
     100% { transform: rotateX(-90deg); box-shadow: 0 8px 20px rgba(0,0,0,0.7); }
+  }
+  @-webkit-keyframes flipBottom {
+    0%   { -webkit-transform: rotateX(90deg); }
+    100% { -webkit-transform: rotateX(0deg); }
   }
   @keyframes flipBottom {
     0%   { transform: rotateX(90deg); }
-    100% { transform: rotateX(0deg);  }
+    100% { transform: rotateX(0deg); }
   }
 
   .flip-card::after {
@@ -220,6 +284,7 @@
     left: 3px; right: 3px;
     top: calc(50% - 1px);
     height: 2px;
+    background: #0d0d0d;
     background: var(--divider);
     z-index: 20;
     pointer-events: none;
@@ -230,147 +295,172 @@
     margin-top: 20px;
     font-family: 'Share Tech Mono', monospace;
     font-size: 14px;
+    color: #806030;
     color: var(--dim);
     letter-spacing: 4px;
     text-transform: uppercase;
     position: relative; z-index: 10;
   }
 
-  /* ── Weather ── */
+  /* ── Weather — NO gap ── */
   .weather {
     margin-top: 28px;
+    display: -ms-flexbox;
     display: flex;
+    -ms-flex-align: center;
     align-items: center;
-    gap: 24px;
     padding: 14px 28px;
     border: 1px solid #2a1f08;
     border-radius: 4px;
     background: rgba(20,15,5,0.7);
     min-width: 280px;
+    -ms-flex-pack: center;
     justify-content: center;
     position: relative; z-index: 10;
   }
-  .weather-icon { font-size: 34px; line-height: 1; filter: drop-shadow(0 0 8px rgba(232,168,32,0.3)); }
-  .weather-info { display: flex; flex-direction: column; gap: 4px; }
-  .weather-temp { font-size: 34px; font-weight: 700; color: var(--card-face); line-height: 1; text-shadow: 0 0 20px rgba(240,192,96,0.2); }
-  .weather-desc { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--dim); letter-spacing: 3px; text-transform: uppercase; }
-  .weather-city { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #503820; letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
-  .weather-loading { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--dim); letter-spacing: 3px; animation: pulse 1.4s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
-  .weather-error { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #604020; letter-spacing: 2px; text-align: center; line-height: 1.7; }
+  .weather-icon {
+    font-size: 34px; line-height: 1;
+    filter: drop-shadow(0 0 8px rgba(232,168,32,0.3));
+    margin-right: 24px;
+  }
+  /* NO gap — weather-info children use margin-bottom */
+  .weather-info {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
+  .weather-temp {
+    font-size: 34px; font-weight: 700;
+    color: #f0c060; color: var(--card-face);
+    line-height: 1; margin-bottom: 4px;
+    text-shadow: 0 0 20px rgba(240,192,96,0.2);
+  }
+  .weather-desc {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: #806030; color: var(--dim);
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .weather-city {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px;
+    color: #503820; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .weather-loading {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: #806030; color: var(--dim); letter-spacing: 3px;
+    -webkit-animation: pulse 1.4s ease-in-out infinite;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @-webkit-keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  @keyframes pulse         { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  .weather-error {
+    font-family: 'Share Tech Mono', monospace; font-size: 10px;
+    color: #604020; letter-spacing: 2px; text-align: center; line-height: 1.7;
+  }
 
-  /* ── Controls panel ── */
+  /* ── Controls — NO gap ── */
   .controls {
     margin-top: 28px;
+    display: -ms-flexbox;
     display: flex;
+    -ms-flex-direction: column;
     flex-direction: column;
+    -ms-flex-align: center;
     align-items: center;
-    gap: 10px;
     position: relative;
     z-index: 20;
+    -webkit-transition: opacity 0.4s, -webkit-transform 0.4s;
     transition: opacity 0.4s, transform 0.4s;
   }
+  .controls > * { margin-bottom: 10px; }
+  .controls > *:last-child { margin-bottom: 0; }
 
   .controls.hidden {
     opacity: 0;
     pointer-events: none;
+    -webkit-transform: translateY(10px);
     transform: translateY(10px);
   }
 
-  /* Location row */
+  /* loc-row — NO gap */
   .loc-row {
+    display: -ms-flexbox;
     display: flex;
-    gap: 6px;
+    -ms-flex-align: center;
     align-items: center;
   }
+  .loc-row > * { margin-right: 6px; }
+  .loc-row > *:last-child { margin-right: 0; }
 
   .loc-input {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 2px;
+    font-size: 13px; letter-spacing: 2px;
     background: rgba(30,22,8,0.9);
-    border: 1px solid #3a2810;
-    border-radius: 4px;
-    color: #c89030;
-    padding: 7px 12px;
-    width: 180px;
-    outline: none;
-    text-transform: uppercase;
+    border: 1px solid #3a2810; border-radius: 4px;
+    color: #c89030; padding: 7px 12px; width: 180px;
+    outline: none; text-transform: uppercase;
   }
-  .loc-input::placeholder { color: #4a3018; }
   .loc-input:focus { border-color: #6a4820; }
 
-  /* Buttons row */
+  /* btn-row — NO gap */
   .btn-row {
+    display: -ms-flexbox;
     display: flex;
-    gap: 8px;
+    -ms-flex-align: center;
     align-items: center;
   }
+  .btn-row > * { margin-right: 8px; }
+  .btn-row > *:last-child { margin-right: 0; }
 
   .ctrl-btn {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
+    font-size: 11px; letter-spacing: 2px;
     background: rgba(30,22,8,0.9);
-    border: 1px solid #3a2810;
-    border-radius: 4px;
-    color: #806030;
-    padding: 7px 14px;
-    cursor: pointer;
+    border: 1px solid #3a2810; border-radius: 4px;
+    color: #806030; padding: 7px 14px; cursor: pointer;
+    -webkit-transition: background 0.15s, color 0.15s, border-color 0.15s;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
-    text-transform: uppercase;
-    white-space: nowrap;
+    text-transform: uppercase; white-space: nowrap;
   }
-  .ctrl-btn:hover { background: rgba(50,35,10,0.95); color: #c89030; border-color: #6a4820; }
+  .ctrl-btn:hover  { background: rgba(50,35,10,0.95); color: #c89030; border-color: #6a4820; }
   .ctrl-btn.active { background: rgba(60,42,12,0.95); color: #f0c060; border-color: #9a6828; }
 
-  /* Color picker wrapper */
-  .color-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
+  /* Color picker — NO gap in flex */
+  .color-wrap { position: relative; display: -ms-flexbox; display: flex; -ms-flex-align: center; align-items: center; }
   .color-btn {
     font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
+    font-size: 11px; letter-spacing: 2px;
     background: rgba(30,22,8,0.9);
-    border: 1px solid #3a2810;
-    border-radius: 4px;
-    color: #806030;
-    padding: 7px 14px;
-    cursor: pointer;
+    border: 1px solid #3a2810; border-radius: 4px;
+    color: #806030; padding: 7px 14px; cursor: pointer;
+    -webkit-transition: background 0.15s, color 0.15s, border-color 0.15s;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
     text-transform: uppercase;
-    display: flex; align-items: center; gap: 8px;
+    display: -ms-flexbox; display: flex;
+    -ms-flex-align: center; align-items: center;
   }
   .color-btn:hover { background: rgba(50,35,10,0.95); color: #c89030; border-color: #6a4820; }
 
   .color-swatch {
-    width: 14px; height: 14px;
-    border-radius: 50%;
+    width: 14px; height: 14px; border-radius: 50%;
     border: 1px solid rgba(255,255,255,0.2);
-    background: var(--card-face);
-    flex-shrink: 0;
+    background: #f0c060; background: var(--card-face);
+    -ms-flex-negative: 0; flex-shrink: 0;
+    margin-right: 8px;
   }
 
-  /* Hidden real color input positioned over the button */
+  /* Color input — NO inset */
   .real-color-input {
     position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-    border: none;
-    padding: 0;
+    top: 0; right: 0; bottom: 0; left: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+    border: none; padding: 0;
   }
-
-  /* Fullscreen mode overrides */
-  body.fullscreen .controls { opacity: 0; pointer-events: none; transform: translateY(10px); }
 </style>
 </head>
-<body>
+<body style="background-color:#0d0d0d;">
 
 <div id="snow-container"></div>
 
@@ -403,31 +493,22 @@
   <div class="weather-loading">HAETAAN SIJAINTIA...</div>
 </div>
 
-<!-- Controls (hidden in fullscreen) -->
 <div class="controls" id="controls">
-
   <div class="loc-row">
     <input class="loc-input" id="loc-input" type="text" placeholder="Kaupunki..." spellcheck="false" autocomplete="off">
     <button class="ctrl-btn" id="loc-btn">HAE</button>
   </div>
-
   <div class="btn-row">
-    <!-- Color picker -->
     <div class="color-wrap">
       <div class="color-btn">
-        <div class="color-swatch" id="color-swatch"></div>
-        VÄRI
+        <div class="color-swatch" id="color-swatch"></div>VÄRI
       </div>
       <input class="real-color-input" type="color" id="color-input" value="#f0c060">
     </div>
-
-    <!-- Snow toggle -->
-    <button class="ctrl-btn" id="snow-btn">❄ LUMI</button>
-
-    <!-- Fullscreen -->
-    <button class="ctrl-btn" id="fs-btn">⛶ KOKO NÄYTTÖ</button>
+    <button class="ctrl-btn" id="snow-btn">&#10052; LUMI</button>
+    <button class="ctrl-btn" id="sec-btn">:SS PIILOTA</button>
+    <button class="ctrl-btn" id="fs-btn">&#x26F6; KOKO NÄYTTÖ</button>
   </div>
-
 </div>
 
 <script>
@@ -435,28 +516,27 @@
 //  FLIP CARD
 // ═══════════════════════════════════════════
 function buildCard(el, digit) {
-  el.innerHTML = `
-    <div class="static-top"><div class="digit-face">${digit}</div></div>
-    <div class="static-bottom"><div class="digit-face">${digit}</div></div>
-    <div class="flap-top"><div class="digit-face">${digit}</div></div>
-    <div class="flap-bottom"><div class="digit-face">${digit}</div></div>
-  `;
+  el.innerHTML =
+    '<div class="static-top"><div class="digit-face">' + digit + '</div></div>' +
+    '<div class="static-bottom"><div class="digit-face">' + digit + '</div></div>' +
+    '<div class="flap-top"><div class="digit-face">' + digit + '</div></div>' +
+    '<div class="flap-bottom"><div class="digit-face">' + digit + '</div></div>';
   el.dataset.digit = digit;
 }
 
 function flipCard(el, newDigit) {
-  const old = el.dataset.digit;
+  var old = el.dataset.digit;
   if (old === newDigit) return;
 
-  const flapTop    = el.querySelector('.flap-top');
-  const flapBottom = el.querySelector('.flap-bottom');
-  const staticTop  = el.querySelector('.static-top .digit-face');
-  const staticBot  = el.querySelector('.static-bottom .digit-face');
+  var flapTop    = el.querySelector('.flap-top');
+  var flapBottom = el.querySelector('.flap-bottom');
+  var staticTop  = el.querySelector('.static-top .digit-face');
+  var staticBot  = el.querySelector('.static-bottom .digit-face');
 
   flapTop.querySelector('.digit-face').textContent    = old;
   flapBottom.querySelector('.digit-face').textContent = newDigit;
-  staticTop.textContent = newDigit; // safe — covered by flap-top at 0°
-  staticBot.textContent = old;      // keep old — exposed while flap-bottom is at 90° (invisible)
+  staticTop.textContent = newDigit;
+  staticBot.textContent = old;
 
   flapTop.classList.remove('flip');
   flapBottom.classList.remove('flip');
@@ -466,33 +546,34 @@ function flipCard(el, newDigit) {
   flapBottom.classList.add('flip');
 
   if (el._ft) clearTimeout(el._ft);
-  el._ft = setTimeout(() => { staticBot.textContent = newDigit; }, 460);
+  el._ft = setTimeout(function() { staticBot.textContent = newDigit; }, 460);
 
   el.dataset.digit = newDigit;
 }
 
-const cards = {
+var cards = {
   h1: document.getElementById('h1'), h2: document.getElementById('h2'),
   m1: document.getElementById('m1'), m2: document.getElementById('m2'),
   s1: document.getElementById('s1'), s2: document.getElementById('s2'),
 };
-Object.values(cards).forEach(el => buildCard(el, '0'));
+var cardKeys = Object.keys(cards);
+for (var i = 0; i < cardKeys.length; i++) { buildCard(cards[cardKeys[i]], '0'); }
 
 // ═══════════════════════════════════════════
 //  CLOCK TICK
 // ═══════════════════════════════════════════
-const FI_DAYS = ['Sunnuntai','Maanantai','Tiistai','Keskiviikko','Torstai','Perjantai','Lauantai'];
+var FI_DAYS = ['Sunnuntai','Maanantai','Tiistai','Keskiviikko','Torstai','Perjantai','Lauantai'];
 
 function tick() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  const ss = String(now.getSeconds()).padStart(2,'0');
+  var now = new Date();
+  var hh = String(now.getHours()).padStart(2,'0');
+  var mm = String(now.getMinutes()).padStart(2,'0');
+  var ss = String(now.getSeconds()).padStart(2,'0');
   flipCard(cards.h1, hh[0]); flipCard(cards.h2, hh[1]);
   flipCard(cards.m1, mm[0]); flipCard(cards.m2, mm[1]);
   flipCard(cards.s1, ss[0]); flipCard(cards.s2, ss[1]);
   document.getElementById('date-row').textContent =
-    `${FI_DAYS[now.getDay()]}  ${now.getDate()}.${now.getMonth()+1}.${now.getFullYear()}`;
+    FI_DAYS[now.getDay()] + '  ' + now.getDate() + '.' + (now.getMonth()+1) + '.' + now.getFullYear();
 }
 tick();
 setInterval(tick, 1000);
@@ -500,7 +581,7 @@ setInterval(tick, 1000);
 // ═══════════════════════════════════════════
 //  WEATHER
 // ═══════════════════════════════════════════
-const WMO = {
+var WMO = {
   0:['☀️','Selkeää'],    1:['🌤','Melko selkeää'],  2:['⛅','Puolipilvistä'],
   3:['☁️','Pilvistä'],   45:['🌫','Sumua'],          48:['🌫','Jäätävää sumua'],
   51:['🌦','Tihkua'],    53:['🌦','Tihkusadetta'],   55:['🌧','Rankka tihku'],
@@ -511,230 +592,294 @@ const WMO = {
   95:['⛈','Ukkosmyrsky'],96:['⛈','Ukkonen+rakeet'], 99:['⛈','Rankka ukkonen'],
 };
 
-let weatherTimer = null;
+var weatherTimer = null;
 
-async function fetchWeather(lat, lon, city) {
-  const el = document.getElementById('weather');
+function fetchWeather(lat, lon, city) {
+  var el = document.getElementById('weather');
   if (weatherTimer) clearTimeout(weatherTimer);
-  try {
-    if (!city) {
-      try {
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
-          { headers: { 'Accept-Language': 'fi' } }
-        );
-        const d = await r.json();
-        city = d.address?.city || d.address?.town || d.address?.village || d.address?.municipality || '';
-      } catch(_) {}
-    }
-    const res  = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`
-    );
-    const data = await res.json();
-    const cur  = data.current;
-    const temp = Math.round(cur.temperature_2m);
-    const wind = Math.round(cur.wind_speed_10m);
-    const [icon, desc] = WMO[cur.weather_code] || ['🌡','Tuntematon'];
-    el.innerHTML = `
-      <div class="weather-icon">${icon}</div>
-      <div class="weather-info">
-        <div class="weather-temp">${temp > 0 ? '+' : ''}${temp}°C</div>
-        <div class="weather-desc">${desc}</div>
-        <div class="weather-city">${city ? city + '  ·  ' : ''}Tuuli ${wind} m/s</div>
-      </div>`;
-    weatherTimer = setTimeout(() => fetchWeather(lat, lon, city), 10 * 60 * 1000);
-  } catch(_) {
-    el.innerHTML = `<div class="weather-error">SÄÄTIETOJEN HAKU EPÄONNISTUI<br>TARKISTA YHTEYS</div>`;
+
+  // Reverse geocode if no city
+  var geoPromise;
+  if (city) {
+    geoPromise = Promise.resolve(city);
+  } else {
+    geoPromise = fetch(
+      'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=fi'
+    ).then(function(r) { return r.json(); }).then(function(d) {
+      var a = d.address || {};
+      return a.city || a.town || a.village || a.municipality || '';
+    }).catch(function() { return ''; });
   }
+
+  geoPromise.then(function(resolvedCity) {
+    return fetch(
+      'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+      '&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto'
+    ).then(function(res) { return res.json(); }).then(function(data) {
+      var cur  = data.current;
+      var temp = Math.round(cur.temperature_2m);
+      var wind = Math.round(cur.wind_speed_10m);
+      var wmo  = WMO[cur.weather_code] || ['🌡','Tuntematon'];
+      var icon = wmo[0]; var desc = wmo[1];
+      var cityStr = resolvedCity ? resolvedCity + '  ·  ' : '';
+      el.innerHTML =
+        '<div class="weather-icon">' + icon + '</div>' +
+        '<div class="weather-info">' +
+          '<div class="weather-temp">' + (temp > 0 ? '+' : '') + temp + '°C</div>' +
+          '<div class="weather-desc">' + desc + '</div>' +
+          '<div class="weather-city">' + cityStr + 'Tuuli ' + wind + ' m/s</div>' +
+        '</div>';
+      weatherTimer = setTimeout(function() { fetchWeather(lat, lon, resolvedCity); }, 10 * 60 * 1000);
+    });
+  }).catch(function() {
+    el.innerHTML = '<div class="weather-error">SÄÄTIETOJEN HAKU EPÄONNISTUI<br>TARKISTA YHTEYS</div>';
+  });
 }
 
-// Geocode city name → coordinates
-async function geocodeCity(name) {
-  const res  = await fetch(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`,
-    { headers: { 'Accept-Language': 'fi' } }
-  );
-  const data = await res.json();
-  if (!data.length) throw new Error('Kaupunkia ei löydy');
-  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), city: data[0].display_name.split(',')[0] };
+function geocodeCity(name) {
+  return fetch(
+    'https://nominatim.openstreetmap.org/search?q=' + encodeURIComponent(name) + '&format=json&limit=1&accept-language=fi'
+  ).then(function(res) { return res.json(); }).then(function(data) {
+    if (!data.length) throw new Error('Kaupunkia ei löydy');
+    return {
+      lat: parseFloat(data[0].lat),
+      lon: parseFloat(data[0].lon),
+      city: data[0].display_name.split(',')[0]
+    };
+  });
 }
 
-// IP geolocation with multiple fallbacks
-async function getLocationByIP() {
-  const services = [
-    async () => {
-      const d = await (await fetch('https://ip-api.com/json/?fields=lat,lon,city,status')).json();
-      if (d.status !== 'success') throw new Error();
-      return { lat: d.lat, lon: d.lon, city: d.city || '' };
-    },
-    async () => {
-      const d = await (await fetch('https://ipapi.co/json/')).json();
-      if (!d.latitude) throw new Error();
-      return { lat: d.latitude, lon: d.longitude, city: d.city || '' };
-    },
-    async () => {
-      const d = await (await fetch('https://freeipapi.com/api/json')).json();
-      if (!d.latitude) throw new Error();
+// IP geolocation via XMLHttpRequest (more compatible than fetch on EdgeHTML)
+function xhrGet(url) {
+  return new Promise(function(resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.timeout = 5000;
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try { resolve(JSON.parse(xhr.responseText)); }
+        catch(e) { reject(e); }
+      } else { reject(new Error('HTTP ' + xhr.status)); }
+    };
+    xhr.onerror   = function() { reject(new Error('XHR error')); };
+    xhr.ontimeout = function() { reject(new Error('timeout')); };
+    xhr.send();
+  });
+}
+
+function getLocationByIP() {
+  return xhrGet('https://ipapi.co/json/').then(function(d) {
+    if (!d.latitude) throw new Error('fail');
+    return { lat: d.latitude, lon: d.longitude, city: d.city || '' };
+  }).catch(function() {
+    return xhrGet('https://freeipapi.com/api/json').then(function(d) {
+      if (!d.latitude) throw new Error('fail');
       return { lat: d.latitude, lon: d.longitude, city: d.cityName || '' };
-    },
-  ];
-  for (const svc of services) {
-    try { return await svc(); } catch(_) {}
-  }
-  throw new Error('IP-sijainti epäonnistui');
+    });
+  }).catch(function() {
+    return xhrGet('https://geolocation-db.com/json/').then(function(d) {
+      if (!d.latitude) throw new Error('fail');
+      return { lat: d.latitude, lon: d.longitude, city: d.city || '' };
+    });
+  });
 }
 
-async function ipFallback() {
-  const el = document.getElementById('weather');
-  el.innerHTML = `<div class="weather-loading">HAETAAN IP-SIJAINNILLA...</div>`;
-  try {
-    const { lat, lon, city } = await getLocationByIP();
-    fetchWeather(lat, lon, city);
-  } catch(_) {
-    el.innerHTML = `<div class="weather-error">SIJAINTIA EI SAATU<br>TARKISTA YHTEYS</div>`;
-  }
+function ipFallback() {
+  var el = document.getElementById('weather');
+  el.innerHTML = '<div class="weather-loading">HAETAAN IP-SIJAINNILLA...</div>';
+  getLocationByIP().then(function(loc) {
+    fetchWeather(loc.lat, loc.lon, loc.city);
+  }).catch(function() {
+    el.innerHTML = '<div class="weather-error">SIJAINTIA EI SAATU<br>TARKISTA YHTEYS</div>';
+  });
 }
 
 function startWeather() {
   if (!navigator.geolocation) { ipFallback(); return; }
-  const fallbackTimer = setTimeout(ipFallback, 4000);
+  var fallbackTimer = setTimeout(ipFallback, 4000);
   navigator.geolocation.getCurrentPosition(
-    pos => {
+    function(pos) {
       clearTimeout(fallbackTimer);
       fetchWeather(pos.coords.latitude, pos.coords.longitude, '');
     },
-    () => { clearTimeout(fallbackTimer); ipFallback(); },
+    function() { clearTimeout(fallbackTimer); ipFallback(); },
     { timeout: 8000, maximumAge: 300000 }
   );
 }
 
 startWeather();
 
-// Manual location search
-const locInput = document.getElementById('loc-input');
-const locBtn   = document.getElementById('loc-btn');
+// Manual location
+var locInput = document.getElementById('loc-input');
+var locBtn   = document.getElementById('loc-btn');
 
-async function searchLocation() {
-  const name = locInput.value.trim();
+function searchLocation() {
+  var name = locInput.value.trim();
   if (!name) return;
-  const el = document.getElementById('weather');
-  el.innerHTML = `<div class="weather-loading">HAETAAN...</div>`;
-  try {
-    const { lat, lon, city } = await geocodeCity(name);
-    fetchWeather(lat, lon, city);
-  } catch(_) {
-    el.innerHTML = `<div class="weather-error">KAUPUNKIA EI LÖYDY<br>KOKEILE ENGLANNIKSI</div>`;
-  }
+  var el = document.getElementById('weather');
+  el.innerHTML = '<div class="weather-loading">HAETAAN...</div>';
+  geocodeCity(name).then(function(loc) {
+    fetchWeather(loc.lat, loc.lon, loc.city);
+  }).catch(function() {
+    el.innerHTML = '<div class="weather-error">KAUPUNKIA EI LÖYDY<br>KOKEILE ENGLANNIKSI</div>';
+  });
 }
 
 locBtn.addEventListener('click', searchLocation);
-locInput.addEventListener('keydown', e => { if (e.key === 'Enter') searchLocation(); });
+locInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') searchLocation(); });
 
 // ═══════════════════════════════════════════
-//  SNOW
+//  SNOW — dynamic per-flake keyframes (no CSS var in keyframes)
 // ═══════════════════════════════════════════
-let snowActive = false;
-const snowContainer = document.getElementById('snow-container');
-const snowBtn       = document.getElementById('snow-btn');
-let snowFlakes      = [];
+var snowActive    = false;
+var snowContainer = document.getElementById('snow-container');
+var snowBtn       = document.getElementById('snow-btn');
+var snowFlakes    = [];
+var snowStyles    = [];
+var snowIndex     = 0;
 
 function randomBetween(a, b) { return a + Math.random() * (b - a); }
 
 function createSnowflake() {
-  const el   = document.createElement('div');
+  var idx   = snowIndex++;
+  var size  = randomBetween(4, 13);
+  var dur   = randomBetween(4, 11);
+  var left  = randomBetween(0, 100);
+  var drift = Math.round(randomBetween(-60, 60));
+  var delay = randomBetween(0, dur);
+  var name  = 'fall_' + idx;
+
+  // Inject a unique keyframe with the drift value baked in (no CSS var needed)
+  var styleEl = document.createElement('style');
+  styleEl.textContent =
+    '@-webkit-keyframes ' + name + ' {' +
+      '0%   { -webkit-transform: translateY(0) translateX(0); opacity: 0; }' +
+      '5%   { opacity: 1; }' +
+      '95%  { opacity: 0.7; }' +
+      '100% { -webkit-transform: translateY(105vh) translateX(' + drift + 'px); opacity: 0; }' +
+    '}' +
+    '@keyframes ' + name + ' {' +
+      '0%   { transform: translateY(0) translateX(0); opacity: 0; }' +
+      '5%   { opacity: 1; }' +
+      '95%  { opacity: 0.7; }' +
+      '100% { transform: translateY(105vh) translateX(' + drift + 'px); opacity: 0; }' +
+    '}';
+  document.head.appendChild(styleEl);
+  snowStyles.push(styleEl);
+
+  var el = document.createElement('div');
   el.className = 'snowflake';
-  const size = randomBetween(4, 13);
-  const dur  = randomBetween(4, 11);
-  const left = randomBetween(0, 100);
-  const drift = randomBetween(-60, 60);
-  const delay = randomBetween(0, dur);
-  el.style.cssText = `
-    width:${size}px; height:${size}px;
-    left:${left}%;
-    animation-duration:${dur}s;
-    animation-delay:-${delay}s;
-    --drift:${drift}px;
-    opacity:${randomBetween(0.5, 0.9)};
-  `;
+  el.style.width  = size + 'px';
+  el.style.height = size + 'px';
+  el.style.left   = left + '%';
+  el.style.opacity = randomBetween(0.5, 0.9);
+  el.style.WebkitAnimationName     = name;
+  el.style.animationName           = name;
+  el.style.WebkitAnimationDuration = dur + 's';
+  el.style.animationDuration       = dur + 's';
+  el.style.WebkitAnimationDelay    = '-' + delay + 's';
+  el.style.animationDelay          = '-' + delay + 's';
+  el.style.WebkitAnimationTimingFunction = 'linear';
+  el.style.animationTimingFunction       = 'linear';
+  el.style.WebkitAnimationIterationCount = 'infinite';
+  el.style.animationIterationCount       = 'infinite';
+
   snowContainer.appendChild(el);
   return el;
 }
 
 function startSnow() {
-  for (let i = 0; i < 60; i++) snowFlakes.push(createSnowflake());
+  for (var i = 0; i < 60; i++) snowFlakes.push(createSnowflake());
 }
 
 function stopSnow() {
-  snowFlakes.forEach(f => f.remove());
-  snowFlakes = [];
+  for (var i = 0; i < snowFlakes.length; i++) snowFlakes[i].parentNode && snowFlakes[i].parentNode.removeChild(snowFlakes[i]);
+  for (var i = 0; i < snowStyles.length; i++) snowStyles[i].parentNode && snowStyles[i].parentNode.removeChild(snowStyles[i]);
+  snowFlakes = []; snowStyles = [];
 }
 
-snowBtn.addEventListener('click', () => {
+snowBtn.addEventListener('click', function() {
   snowActive = !snowActive;
   if (snowActive) { startSnow(); snowBtn.classList.add('active'); }
   else            { stopSnow();  snowBtn.classList.remove('active'); }
 });
 
 // ═══════════════════════════════════════════
-//  COLOR PICKER
+//  HIDE/SHOW SECONDS
 // ═══════════════════════════════════════════
-const colorInput  = document.getElementById('color-input');
-const colorSwatch = document.getElementById('color-swatch');
+var secBtn      = document.getElementById('sec-btn');
+var secGroup    = document.querySelector('.digit-group.seconds');
+var secColon    = document.querySelector('.colon.sec-colon');
+var secsVisible = true;
 
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return {r,g,b};
-}
-
-function adjustColor(hex, factor) {
-  const {r,g,b} = hexToRgb(hex);
-  return `rgb(${Math.round(r*factor)},${Math.round(g*factor)},${Math.round(b*factor)})`;
-}
-
-function applyColor(hex) {
-  const root = document.documentElement;
-  root.style.setProperty('--card-face', hex);
-  root.style.setProperty('--card-face-sec', adjustColor(hex, 0.75));
-  root.style.setProperty('--accent', adjustColor(hex, 0.92));
-  root.style.setProperty('--dim', adjustColor(hex, 0.5));
-  colorSwatch.style.background = hex;
-}
-
-colorInput.addEventListener('input', e => applyColor(e.target.value));
-
-// ═══════════════════════════════════════════
-//  FULLSCREEN
-// ═══════════════════════════════════════════
-const fsBtn    = document.getElementById('fs-btn');
-const controls = document.getElementById('controls');
-
-function enterFullscreen() {
-  document.documentElement.requestFullscreen?.() ||
-  document.documentElement.webkitRequestFullscreen?.();
-}
-function exitFullscreen() {
-  document.exitFullscreen?.() || document.webkitExitFullscreen?.();
-}
-
-fsBtn.addEventListener('click', () => {
-  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    enterFullscreen();
-  } else {
-    exitFullscreen();
-  }
+secBtn.addEventListener('click', function() {
+  secsVisible = !secsVisible;
+  secGroup.style.display  = secsVisible ? '' : 'none';
+  secColon.style.display  = secsVisible ? '' : 'none';
+  secBtn.textContent      = secsVisible ? ':SS PIILOTA' : ':SS NÄYTÄ';
+  if (secsVisible) { secBtn.classList.remove('active'); }
+  else             { secBtn.classList.add('active'); }
 });
 
-function onFullscreenChange() {
-  const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-  controls.classList.toggle('hidden', isFs);
-  fsBtn.textContent = isFs ? '✕ POISTU' : '⛶ KOKO NÄYTTÖ';
+
+var colorInput  = document.getElementById('color-input');
+var colorSwatch = document.getElementById('color-swatch');
+
+function hexToRgb(hex) {
+  return {
+    r: parseInt(hex.slice(1,3),16),
+    g: parseInt(hex.slice(3,5),16),
+    b: parseInt(hex.slice(5,7),16)
+  };
+}
+function adjustColor(hex, factor) {
+  var c = hexToRgb(hex);
+  return 'rgb(' + Math.round(c.r*factor) + ',' + Math.round(c.g*factor) + ',' + Math.round(c.b*factor) + ')';
+}
+function applyColor(hex) {
+  var root = document.documentElement;
+  root.style.setProperty('--card-face',     hex);
+  root.style.setProperty('--card-face-sec', adjustColor(hex, 0.75));
+  root.style.setProperty('--accent',        adjustColor(hex, 0.92));
+  root.style.setProperty('--dim',           adjustColor(hex, 0.5));
+  colorSwatch.style.background = hex;
+}
+colorInput.addEventListener('input', function(e) { applyColor(e.target.value); });
+
+// ═══════════════════════════════════════════
+//  FULLSCREEN — with -ms- prefix for EdgeHTML
+// ═══════════════════════════════════════════
+var fsBtn    = document.getElementById('fs-btn');
+var controls = document.getElementById('controls');
+
+function enterFullscreen() {
+  var el = document.documentElement;
+  if (el.requestFullscreen)        { el.requestFullscreen(); }
+  else if (el.msRequestFullscreen) { el.msRequestFullscreen(); }
+  else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+}
+function exitFullscreen() {
+  if (document.exitFullscreen)        { document.exitFullscreen(); }
+  else if (document.msExitFullscreen) { document.msExitFullscreen(); }
+  else if (document.webkitExitFullscreen) { document.webkitExitFullscreen(); }
+}
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.msFullscreenElement || document.webkitFullscreenElement);
 }
 
-document.addEventListener('fullscreenchange', onFullscreenChange);
-document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+fsBtn.addEventListener('click', function() {
+  if (isFullscreen()) { exitFullscreen(); } else { enterFullscreen(); }
+});
+
+function onFsChange() {
+  var fs = isFullscreen();
+  if (fs) { controls.classList.add('hidden'); fsBtn.textContent = '✕ POISTU'; }
+  else    { controls.classList.remove('hidden'); fsBtn.textContent = '⛶ KOKO NÄYTTÖ'; }
+}
+
+document.addEventListener('fullscreenchange',       onFsChange);
+document.addEventListener('msfullscreenchange',     onFsChange);
+document.addEventListener('webkitfullscreenchange', onFsChange);
 </script>
 </body>
 </html>
