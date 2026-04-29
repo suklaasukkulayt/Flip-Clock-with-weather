@@ -65,21 +65,13 @@
     z-index: 996;
   }
 
-  /* Snow — NO inset */
-  #snow-container {
+  /* Snow canvas — must be ABOVE scanlines (z-index 997) so no scan-line pattern on flakes */
+  #snow-canvas {
     position: fixed;
-    top: 0; right: 0; bottom: 0; left: 0;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     pointer-events: none;
-    z-index: 1;
-    overflow: hidden;
-  }
-
-  .snowflake {
-    position: absolute;
-    top: -20px;
-    border-radius: 50%;
-    background: rgba(200,220,255,0.88);
-    /* animation-name is set per-element in JS; duration/delay too */
+    z-index: 998;
   }
 
   /* ── Clock — NO gap, use margins instead ── */
@@ -130,19 +122,12 @@
     background: var(--accent);
     box-shadow: 0 0 8px #e8a820, 0 0 18px rgba(232,168,32,0.35);
     box-shadow: 0 0 8px var(--accent), 0 0 18px rgba(232,168,32,0.35);
-    -webkit-animation: blink 1s step-end infinite;
-    animation: blink 1s step-end infinite;
+    -webkit-transition: opacity 0.08s;
+    transition: opacity 0.08s;
   }
   .sec-colon .colon-dot { width: 6px; height: 6px; }
-
-  @-webkit-keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.12; }
-  }
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.12; }
-  }
+  /* Both colons driven by JS — .dim class applied in tick() */
+  .colon-dot.dim { opacity: 0.12; }
 
   /* ── Flip card ── */
   .flip-card {
@@ -299,7 +284,6 @@
     color: var(--dim);
     letter-spacing: 4px;
     text-transform: uppercase;
-    position: relative; z-index: 10;
   }
 
   /* ── Weather — NO gap ── */
@@ -450,7 +434,73 @@
     margin-right: 8px;
   }
 
-  /* Color input — NO inset */
+  .sec-colon .colon-dot.dim { opacity: 0.12; }
+
+  /* ── Content wrapper for height control ── */
+  #content {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -ms-flex-align: center;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+    -webkit-transition: -webkit-transform 0.2s;
+    transition: transform 0.2s;
+  }
+
+  /* ── Height slider row ── */
+  .slider-row {
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-align: center;
+    align-items: center;
+  }
+  .slider-row > * { margin-right: 8px; }
+  .slider-row > *:last-child { margin-right: 0; }
+
+  .slider-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; letter-spacing: 2px;
+    color: #806030; color: var(--dim);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* Range input — basic cross-browser styling */
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 140px; height: 4px;
+    background: #3a2810;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #e8a820;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  input[type=range]::-ms-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #e8a820;
+    background: var(--accent);
+    cursor: pointer;
+    border: none;
+  }
+  input[type=range]::-ms-track {
+    height: 4px;
+    background: #3a2810;
+    border-color: transparent;
+    color: transparent;
+  }
+
   .real-color-input {
     position: absolute;
     top: 0; right: 0; bottom: 0; left: 0;
@@ -462,7 +512,9 @@
 </head>
 <body style="background-color:#0d0d0d;">
 
-<div id="snow-container"></div>
+<canvas id="snow-canvas"></canvas>
+
+<div id="content">
 
 <div class="clock">
   <div class="digit-group">
@@ -493,7 +545,13 @@
   <div class="weather-loading">HAETAAN SIJAINTIA...</div>
 </div>
 
+</div><!-- /#content -->
+
 <div class="controls" id="controls">
+  <div class="slider-row">
+    <span class="slider-label">&#8597; KORKEUS</span>
+    <input type="range" id="height-slider" min="-40" max="40" value="0" step="1">
+  </div>
   <div class="loc-row">
     <input class="loc-input" id="loc-input" type="text" placeholder="Kaupunki..." spellcheck="false" autocomplete="off">
     <button class="ctrl-btn" id="loc-btn">HAE</button>
@@ -559,6 +617,19 @@ var cards = {
 var cardKeys = Object.keys(cards);
 for (var i = 0; i < cardKeys.length; i++) { buildCard(cards[cardKeys[i]], '0'); }
 
+// Colon dot refs — grabbed once
+var allColonDots    = document.querySelectorAll('.colon-dot');
+var secColonDots    = document.querySelectorAll('.sec-colon .colon-dot');
+
+// sec-colon sync — driven from tick()
+function updateSecColon() {
+  var lit = (new Date().getSeconds() % 2 === 0);
+  for (var i = 0; i < secColonDots.length; i++) {
+    if (lit) { secColonDots[i].classList.remove('dim'); }
+    else     { secColonDots[i].classList.add('dim'); }
+  }
+}
+
 // ═══════════════════════════════════════════
 //  CLOCK TICK
 // ═══════════════════════════════════════════
@@ -572,6 +643,14 @@ function tick() {
   flipCard(cards.h1, hh[0]); flipCard(cards.h2, hh[1]);
   flipCard(cards.m1, mm[0]); flipCard(cards.m2, mm[1]);
   flipCard(cards.s1, ss[0]); flipCard(cards.s2, ss[1]);
+
+  // Blink ALL colon dots in sync (even seconds = lit)
+  var lit = (now.getSeconds() % 2 === 0);
+  for (var i = 0; i < allColonDots.length; i++) {
+    if (lit) { allColonDots[i].classList.remove('dim'); }
+    else     { allColonDots[i].classList.add('dim'); }
+  }
+
   document.getElementById('date-row').textContent =
     FI_DAYS[now.getDay()] + '  ' + now.getDate() + '.' + (now.getMonth()+1) + '.' + now.getFullYear();
 }
@@ -729,74 +808,91 @@ locBtn.addEventListener('click', searchLocation);
 locInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') searchLocation(); });
 
 // ═══════════════════════════════════════════
-//  SNOW — dynamic per-flake keyframes (no CSS var in keyframes)
+//  SNOW — canvas + requestAnimationFrame
 // ═══════════════════════════════════════════
-var snowActive    = false;
-var snowContainer = document.getElementById('snow-container');
-var snowBtn       = document.getElementById('snow-btn');
-var snowFlakes    = [];
-var snowStyles    = [];
-var snowIndex     = 0;
+var snowActive  = false;
+var snowBtn     = document.getElementById('snow-btn');
+var snowCanvas  = document.getElementById('snow-canvas');
+var snowCtx     = snowCanvas.getContext('2d');
+var snowRaf     = null;
+var snowParticles = [];
+
+function resizeCanvas() {
+  snowCanvas.width  = window.innerWidth  || document.documentElement.clientWidth;
+  snowCanvas.height = window.innerHeight || document.documentElement.clientHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 function randomBetween(a, b) { return a + Math.random() * (b - a); }
 
-function createSnowflake() {
-  var idx   = snowIndex++;
-  var size  = randomBetween(4, 13);
-  var dur   = randomBetween(4, 11);
-  var left  = randomBetween(0, 100);
-  var drift = Math.round(randomBetween(-60, 60));
-  var delay = randomBetween(0, dur);
-  var name  = 'fall_' + idx;
+function makeParticle() {
+  return {
+    x:     randomBetween(0, snowCanvas.width),
+    y:     randomBetween(-20, -2),
+    r:     randomBetween(2, 6),
+    speed: randomBetween(0.6, 2.0)
+  };
+}
 
-  // Inject a unique keyframe with the drift value baked in (no CSS var needed)
-  var styleEl = document.createElement('style');
-  styleEl.textContent =
-    '@-webkit-keyframes ' + name + ' {' +
-      '0%   { -webkit-transform: translateY(0) translateX(0); opacity: 0; }' +
-      '5%   { opacity: 1; }' +
-      '95%  { opacity: 0.7; }' +
-      '100% { -webkit-transform: translateY(105vh) translateX(' + drift + 'px); opacity: 0; }' +
-    '}' +
-    '@keyframes ' + name + ' {' +
-      '0%   { transform: translateY(0) translateX(0); opacity: 0; }' +
-      '5%   { opacity: 1; }' +
-      '95%  { opacity: 0.7; }' +
-      '100% { transform: translateY(105vh) translateX(' + drift + 'px); opacity: 0; }' +
-    '}';
-  document.head.appendChild(styleEl);
-  snowStyles.push(styleEl);
+function initParticles() {
+  snowParticles = [];
+  var count = 50;
+  for (var i = 0; i < count; i++) {
+    var p = makeParticle();
+    p.y = randomBetween(-20, snowCanvas.height);
+    snowParticles.push(p);
+  }
+}
 
-  var el = document.createElement('div');
-  el.className = 'snowflake';
-  el.style.width  = size + 'px';
-  el.style.height = size + 'px';
-  el.style.left   = left + '%';
-  el.style.opacity = randomBetween(0.5, 0.9);
-  el.style.WebkitAnimationName     = name;
-  el.style.animationName           = name;
-  el.style.WebkitAnimationDuration = dur + 's';
-  el.style.animationDuration       = dur + 's';
-  el.style.WebkitAnimationDelay    = '-' + delay + 's';
-  el.style.animationDelay          = '-' + delay + 's';
-  el.style.WebkitAnimationTimingFunction = 'linear';
-  el.style.animationTimingFunction       = 'linear';
-  el.style.WebkitAnimationIterationCount = 'infinite';
-  el.style.animationIterationCount       = 'infinite';
+var snowLastTime = 0;
 
-  snowContainer.appendChild(el);
-  return el;
+function stepSnow(timestamp) {
+  if (!snowActive) return;
+
+  // Delta-time in ms; cap at 100ms to avoid huge jumps after tab switch
+  var delta = timestamp - snowLastTime;
+  if (delta > 100) delta = 100;
+  snowLastTime = timestamp;
+  // Normalise to 16.67ms (60fps baseline) so speed is frame-rate independent
+  var dt = delta / 16.667;
+
+  var w = snowCanvas.width;
+  var h = snowCanvas.height;
+  var i, p;
+
+  snowCtx.clearRect(0, 0, w, h);
+  snowCtx.globalAlpha = 0.8;
+  snowCtx.fillStyle = '#ffffff';
+  snowCtx.beginPath();
+  for (i = 0; i < snowParticles.length; i++) {
+    p = snowParticles[i];
+    p.y += p.speed * dt;
+    if (p.y > h + 8) { p.y = -8; p.x = randomBetween(0, w); }
+    snowCtx.moveTo(p.x + p.r, p.y);
+    snowCtx.arc(p.x, p.y, p.r, 0, 6.2832, false);
+  }
+  snowCtx.fill();
+
+  snowRaf = requestAnimationFrame(stepSnow);
 }
 
 function startSnow() {
-  for (var i = 0; i < 60; i++) snowFlakes.push(createSnowflake());
+  initParticles();
+  snowCanvas.style.display = '';
+  snowActive = true;
+  snowLastTime = 0;
+  snowRaf = requestAnimationFrame(stepSnow);
 }
 
 function stopSnow() {
-  for (var i = 0; i < snowFlakes.length; i++) snowFlakes[i].parentNode && snowFlakes[i].parentNode.removeChild(snowFlakes[i]);
-  for (var i = 0; i < snowStyles.length; i++) snowStyles[i].parentNode && snowStyles[i].parentNode.removeChild(snowStyles[i]);
-  snowFlakes = []; snowStyles = [];
+  snowActive = false;
+  if (snowRaf) { cancelAnimationFrame(snowRaf); snowRaf = null; }
+  snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
+  snowCanvas.style.display = 'none';
 }
+
+snowCanvas.style.display = 'none';
 
 snowBtn.addEventListener('click', function() {
   snowActive = !snowActive;
@@ -805,7 +901,7 @@ snowBtn.addEventListener('click', function() {
 });
 
 // ═══════════════════════════════════════════
-//  HIDE/SHOW SECONDS
+//  HIDE/SHOW SECONDS  — with colon sync fix
 // ═══════════════════════════════════════════
 var secBtn      = document.getElementById('sec-btn');
 var secGroup    = document.querySelector('.digit-group.seconds');
@@ -814,12 +910,27 @@ var secsVisible = true;
 
 secBtn.addEventListener('click', function() {
   secsVisible = !secsVisible;
-  secGroup.style.display  = secsVisible ? '' : 'none';
-  secColon.style.display  = secsVisible ? '' : 'none';
-  secBtn.textContent      = secsVisible ? ':SS PIILOTA' : ':SS NÄYTÄ';
+  secGroup.style.display = secsVisible ? '' : 'none';
+  secColon.style.display = secsVisible ? '' : 'none';
+  secBtn.textContent     = secsVisible ? ':SS PIILOTA' : ':SS NÄYTÄ';
   if (secsVisible) { secBtn.classList.remove('active'); }
   else             { secBtn.classList.add('active'); }
 });
+
+// ═══════════════════════════════════════════
+//  HEIGHT SLIDER
+// ═══════════════════════════════════════════
+var heightSlider  = document.getElementById('height-slider');
+var contentEl     = document.getElementById('content');
+
+heightSlider.addEventListener('input', function() {
+  var val = parseInt(heightSlider.value, 10);
+  // positive = up (negative translateY), negative = down
+  contentEl.style.WebkitTransform = 'translateY(' + (-val) + 'vh)';
+  contentEl.style.transform       = 'translateY(' + (-val) + 'vh)';
+});
+
+
 
 
 var colorInput  = document.getElementById('color-input');
